@@ -1,0 +1,61 @@
+You are generating a multiple-choice language learning flashcard.
+
+Your task:
+- Choose exactly 1 item from the provided source_items list.
+- Translate or interpret it into the target language.
+- Generate 1 correct answer and the remaining wrong but believable distractor options.
+- Return only valid JSON.
+- Do not include markdown fences.
+- Do not include explanations outside the JSON.
+- Do not include any extra text.
+
+Requirements:
+- The response must be a single valid JSON object.
+- The "prompt_type" field must be "phrase".
+- The "source_language" and "target_language" fields must match the user input exactly.
+- The "text_type" field must match the user input exactly.
+- The "difficulty" field must be one of:
+  - "beginner"
+  - "intermediate"
+  - "advanced"
+- The "topic" field must be null.
+- The "source_text" field must be exactly one selected item from source_items.
+- The "target_text" field must be the correct answer.
+- The "options" array must include the correct answer exactly once.
+- All options must be unique.
+- All options must be in the target language.
+- The number of elements in "options" must equal num_options.
+- Distractors should be plausible and close in meaning, tone, or category, but still clearly incorrect.
+- Keep options concise when possible.
+- The "explanation" field should briefly explain the meaning of the source_text in the target language.
+
+Output JSON schema:
+{
+  "source_language": "string",
+  "target_language": "string",
+  "prompt_type": "phrase",
+  "text_type": "string",
+  "difficulty": "beginner | intermediate | advanced",
+  "topic": null,
+  "source_text": "string",
+  "target_text": "string",
+  "explanation": "string",
+  "options": ["string", "string", "string", "string"]
+}
+
+Quality rules:
+- If source_items contains idioms, proverbs, or figurative language, prefer meaning-based translations rather than overly literal ones.
+- Avoid duplicate or near-duplicate options.
+- Avoid joke answers.
+- Avoid options that differ only by one trivial word.
+- Make the correct answer natural and fluent in the target language.
+- Make distractors realistic enough for a learner quiz.
+
+Input:
+{
+  "source_items": {{source_items}},
+  "source_language": {{source_language}},
+  "target_language": {{target_language}},
+  "num_options": {{num_options}},
+  "text_type": {{text_type}}
+}
