@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.flashcards import router as flashcards_router
+from app.api.game import router as game_router
 
 app = FastAPI(title=settings.app_name)
 
@@ -14,6 +15,7 @@ app.add_middleware(
 )
 
 app.include_router(flashcards_router)
+app.include_router(game_router)
 
 
 @app.get("/")

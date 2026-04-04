@@ -69,6 +69,45 @@ def make_phrase_flashcard_payload(
     }
     return json.dumps(payload, ensure_ascii=False)
 
+def make_topic_flashcard_batch_payload(
+    topic: str,
+    difficulty: str,
+    source_language: str,
+    target_language: str,
+    num_options: int,
+    text_type: str | None,
+    exclude_source_texts: list[str] | None = None,
+    batch_size: int = 5,
+) -> str:
+    payload = {
+        "topic": topic,
+        "difficulty": difficulty,
+        "source_language": source_language,
+        "target_language": target_language,
+        "num_options": num_options,
+        "text_type": text_type,
+        "exclude_source_texts": exclude_source_texts or [],
+        "batch_size": batch_size,
+    }
+    return json.dumps(payload, ensure_ascii=False)
+
+
+def sanitize_llm_json_array_response(raw_response: str) -> str:
+    if not raw_response:
+        return raw_response
+
+    text = raw_response.strip()
+    text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s*```$", "", text)
+
+    start = text.find("[")
+    end = text.rfind("]")
+
+    if start != -1 and end != -1 and end > start:
+        text = text[start:end + 1]
+
+    return text.strip()
+    
 def make_topic_flashcard_payload(
     topic: str,
     difficulty: str,

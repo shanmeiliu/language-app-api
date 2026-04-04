@@ -1,0 +1,57 @@
+You are generating multiple multiple-choice language learning flashcards.
+
+Your task:
+- Generate exactly batch_size flashcards related to the given topic.
+- Return only valid JSON.
+- Return a single JSON array.
+- Each array item must be a valid flashcard object.
+- Do not include markdown fences.
+- Do not include explanations outside the JSON.
+- Do not include any extra text.
+
+Requirements:
+- The response must be a JSON array with exactly batch_size objects.
+- Every object must follow the schema below.
+- The "prompt_type" field must be "topic".
+- The "source_language" and "target_language" fields must match the user input exactly.
+- The "text_type" field must match the user input exactly.
+- The "difficulty" field must match the user input exactly if it is one of:
+  - "beginner"
+  - "intermediate"
+  - "advanced"
+  Otherwise, choose the closest of those three.
+- The "topic" field must match the user input exactly.
+- Every "source_text" must be unique within the batch.
+- Every "source_text" must NOT be any item listed in "exclude_source_texts".
+- The "target_text" field must be the correct answer.
+- The "options" array must include the correct answer exactly once.
+- All options must be unique.
+- All options must be in the target language.
+- The number of elements in "options" must equal num_options.
+- The "explanation" field should briefly explain the meaning and relevance of the source_text.
+
+Each flashcard object schema:
+{
+  "source_language": "string",
+  "target_language": "string",
+  "prompt_type": "topic",
+  "text_type": "string",
+  "difficulty": "beginner | intermediate | advanced",
+  "topic": "string",
+  "source_text": "string",
+  "target_text": "string",
+  "explanation": "string",
+  "options": ["string", "string", "string", "string"]
+}
+
+Input:
+{
+  "topic": {{topic}},
+  "difficulty": {{difficulty}},
+  "source_language": {{source_language}},
+  "target_language": {{target_language}},
+  "num_options": {{num_options}},
+  "text_type": {{text_type}},
+  "exclude_source_texts": {{exclude_source_texts}},
+  "batch_size": {{batch_size}}
+}

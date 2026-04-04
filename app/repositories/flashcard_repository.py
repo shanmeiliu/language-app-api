@@ -89,6 +89,26 @@ def save_flashcard(
 
     return flashcard_id
 
+def save_flashcards(
+    cards_data: list[dict],
+    model_name: str,
+    prompt_template: str,
+    raw_request: dict,
+    raw_response: str,
+) -> list[str]:
+    flashcard_ids: list[str] = []
+
+    for card_data in cards_data:
+        flashcard_id = save_flashcard(
+            card_data=card_data,
+            model_name=model_name,
+            prompt_template=prompt_template,
+            raw_request=raw_request,
+            raw_response=raw_response,
+        )
+        flashcard_ids.append(flashcard_id)
+
+    return flashcard_ids
 
 def get_flashcard_by_id(flashcard_id: str) -> Optional[dict]:
     with get_db_cursor() as cur:
@@ -237,3 +257,74 @@ def find_existing_topic_flashcard(
         return None
 
     return get_flashcard_by_id(row[0])
+
+def find_available_topic_flashcards(
+    source_lang: str,
+    target_lang: str,
+    topic: str,
+    difficulty: str,
+    text_type: str | None,
+    exclude_source_texts: list[str] | None = None,
+    limit: int = 5,
+) -> list[dict]:
+    exclude_source_texts = exclude_source_texts or []
+
+    with get_db_cursor() as cur:
+        if exclude_source_texts:
+            cur.execute(
+                """
+                SELECT flashcard_id
+                FROM public.flashcard
+                WHERE source_lang = %s
+                  AND target_lang = %s
+                  AND prompt_type = 'topic'
+                  AND topic = %s
+                  AND difficulty = %s
+                  AND text_type IS NOT DISTINCT FROM %s
+                  AND NOT (source_text = ANY(%s))
+                ORDER BY created_at DESC
+                LIMIT %s
+                """,
+                (
+                    source_lang,
+                    target_lang,
+                    topic,
+                    difficulty,
+                    text_type,
+                    exclude_source_texts,
+                    limit,
+                ),
+            )
+        else:
+            cur.execute(
+                """
+                SELECT flashcard_id
+                FROM public.flashcard
+                WHERE source_lang = %s
+                  AND target_lang = %s
+                  AND prompt_type = 'topic'
+                  AND topic = %s
+                  AND difficulty = %s
+                  AND text_type IS NOT DISTINCT FROM %s
+                ORDER BY created_at DESC
+                LIMIT %s
+                """,
+                (
+                    source_lang,
+                    target_lang,
+                    topic,
+                    difficulty,
+                    text_type,
+                    limit,
+                ),
+            )
+
+        rows = cur.fetchall()
+
+    results = []
+    for row in rows:
+        record = get_flashcard_by_id(row[0])
+        if record:
+            results.append(record)
+
+    return results
