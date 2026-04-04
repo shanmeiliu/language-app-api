@@ -13,23 +13,10 @@ from app.services.llm_service import (
     sanitize_llm_json_array_response,
 )
 
+REFILL_THRESHOLD = 2
 
-def get_next_game_question(request: GameNextQuestionRequest) -> dict:
-    ensure_schema()
 
-    cached_cards = find_available_topic_flashcards(
-        source_lang=request.source_language,
-        target_lang=request.target_language,
-        topic=request.topic,
-        difficulty=request.difficulty,
-        text_type=request.text_type,
-        exclude_source_texts=request.exclude_source_texts,
-        limit=request.batch_size,
-    )
-
-    if cached_cards:
-        return flashcard_record_to_response(cached_cards[0], cache_hit=True)
-
+def _generate_and_save_batch(request: GameNextQuestionRequest) -> None:
     raw_request = {
         "topic": request.topic,
         "difficulty": request.difficulty,
@@ -59,28 +46,37 @@ def get_next_game_question(request: GameNextQuestionRequest) -> dict:
     if not isinstance(cards_data, list) or not cards_data:
         raise ValueError("LLM batch response was not a non-empty JSON array")
 
-    seen = set(request.exclude_source_texts)
+    excluded = set(request.exclude_source_texts)
     batch_seen = set()
 
+    filtered_cards = []
     for card in cards_data:
         source_text = card.get("source_text")
         if not source_text:
-            raise ValueError("One generated card is missing source_text")
-        if source_text in seen:
-            raise ValueError("LLM returned a repeated source_text that was excluded")
+            continue
+        if source_text in excluded:
+            continue
         if source_text in batch_seen:
-            raise ValueError("LLM returned duplicate source_text values within the batch")
+            continue
         batch_seen.add(source_text)
+        filtered_cards.append(card)
+
+    if not filtered_cards:
+        raise ValueError("LLM batch produced no usable new questions")
 
     save_flashcards(
-        cards_data=cards_data,
+        cards_data=filtered_cards,
         model_name=settings.model_name,
         prompt_template="make_flashcard_batch_for_topic.txt",
         raw_request=raw_request,
         raw_response=sanitized_response,
     )
 
-    refreshed_cards = find_available_topic_flashcards(
+
+def get_next_game_question(request: GameNextQuestionRequest) -> dict:
+    ensure_schema()
+
+    cached_cards = find_available_topic_flashcards(
         source_lang=request.source_language,
         target_lang=request.target_language,
         topic=request.topic,
@@ -90,7 +86,46 @@ def get_next_game_question(request: GameNextQuestionRequest) -> dict:
         limit=request.batch_size,
     )
 
-    if not refreshed_cards:
-        raise ValueError("Batch was saved but no game question could be retrieved")
+    if not cached_cards:
+        _generate_and_save_batch(request)
 
-    return flashcard_record_to_response(refreshed_cards[0], cache_hit=False)
+        cached_cards = find_available_topic_flashcards(
+            source_lang=request.source_language,
+            target_lang=request.target_language,
+            topic=request.topic,
+            difficulty=request.difficulty,
+            text_type=request.text_type,
+            exclude_source_texts=request.exclude_source_texts,
+            limit=request.batch_size,
+        )
+
+        if not cached_cards:
+            raise ValueError("No game question available after batch generation")
+
+    selected = cached_cards[0]
+
+    # Proactively refill if the remaining pool is getting low.
+    remaining_after_return = max(len(cached_cards) - 1, 0)
+    if remaining_after_return < REFILL_THRESHOLD:
+        refill_excludes = list(request.exclude_source_texts) + [
+            card["source_text"] for card in cached_cards
+        ]
+
+        refill_request = GameNextQuestionRequest(
+            topic=request.topic,
+            difficulty=request.difficulty,
+            source_language=request.source_language,
+            target_language=request.target_language,
+            num_options=request.num_options,
+            text_type=request.text_type,
+            exclude_source_texts=refill_excludes,
+            batch_size=request.batch_size,
+        )
+
+        try:
+            _generate_and_save_batch(refill_request)
+        except Exception:
+            # Don't fail the current response just because refill failed.
+            pass
+
+    return flashcard_record_to_response(selected, cache_hit=True)
