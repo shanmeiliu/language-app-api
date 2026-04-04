@@ -175,22 +175,49 @@ def find_existing_phrase_flashcard(
     target_lang: str,
     text_type: str | None,
     source_items: list[str],
+    exclude_source_texts: list[str] | None = None,
 ) -> Optional[dict]:
+    exclude_source_texts = exclude_source_texts or []
+
     with get_db_cursor() as cur:
-        cur.execute(
-            """
-            SELECT flashcard_id
-            FROM public.flashcard
-            WHERE source_lang = %s
-              AND target_lang = %s
-              AND prompt_type = 'phrase'
-              AND text_type IS NOT DISTINCT FROM %s
-              AND source_text = ANY(%s)
-            ORDER BY created_at DESC
-            LIMIT 1
-            """,
-            (source_lang, target_lang, text_type, source_items),
-        )
+        if exclude_source_texts:
+            cur.execute(
+                """
+                SELECT flashcard_id
+                FROM public.flashcard
+                WHERE source_lang = %s
+                  AND target_lang = %s
+                  AND prompt_type = 'phrase'
+                  AND text_type IS NOT DISTINCT FROM %s
+                  AND source_text = ANY(%s)
+                  AND NOT (source_text = ANY(%s))
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (
+                    source_lang,
+                    target_lang,
+                    text_type,
+                    source_items,
+                    exclude_source_texts,
+                ),
+            )
+        else:
+            cur.execute(
+                """
+                SELECT flashcard_id
+                FROM public.flashcard
+                WHERE source_lang = %s
+                  AND target_lang = %s
+                  AND prompt_type = 'phrase'
+                  AND text_type IS NOT DISTINCT FROM %s
+                  AND source_text = ANY(%s)
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (source_lang, target_lang, text_type, source_items),
+            )
+
         row = cur.fetchone()
 
     if not row:
@@ -257,6 +284,8 @@ def find_existing_topic_flashcard(
         return None
 
     return get_flashcard_by_id(row[0])
+
+
 
 def find_available_topic_flashcards(
     source_lang: str,

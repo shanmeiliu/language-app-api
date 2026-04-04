@@ -59,6 +59,7 @@ def make_phrase_flashcard_payload(
     target_language: str,
     num_options: int,
     text_type: str | None,
+    exclude_source_texts: list[str] | None = None,
 ) -> str:
     payload = {
         "source_items": source_items,
@@ -66,6 +67,7 @@ def make_phrase_flashcard_payload(
         "target_language": target_language,
         "num_options": num_options,
         "text_type": text_type,
+        "exclude_source_texts": exclude_source_texts or [],
     }
     return json.dumps(payload, ensure_ascii=False)
 
@@ -107,7 +109,8 @@ def sanitize_llm_json_array_response(raw_response: str) -> str:
         text = text[start:end + 1]
 
     return text.strip()
-    
+
+
 def make_topic_flashcard_payload(
     topic: str,
     difficulty: str,

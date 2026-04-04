@@ -8,6 +8,7 @@ class PhraseFlashcardRequest(BaseModel):
     target_language: str
     num_options: int = Field(..., ge=2, le=8)
     text_type: Optional[str] = None
+    exclude_source_texts: List[str] = Field(default_factory=list)
 
 
 class TopicFlashcardRequest(BaseModel):
