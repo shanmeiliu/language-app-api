@@ -52,6 +52,9 @@ Quality rules:
 - Avoid joke answers.
 - Make the correct answer natural and fluent in the target language.
 - Make distractors realistic enough for a learner quiz.
+- The "source_text" field must NOT be any item listed in "exclude_source_texts".
+- If "exclude_source_texts" is empty, ignore it.
+
 
 Input:
 {
@@ -60,5 +63,6 @@ Input:
   "num_options": {{num_options}},
   "topic": {{topic}},
   "difficulty": {{difficulty}},
-  "text_type": {{text_type}}
+  "text_type": {{text_type}},
+  "exclude_source_texts": {{exclude_source_texts}}
 }

@@ -78,6 +78,7 @@ def create_phrase_flashcard(request: PhraseFlashcardRequest) -> dict:
 
     return flashcard_record_to_response(saved, cache_hit=False)
 
+
 def create_topic_flashcard(request: TopicFlashcardRequest) -> dict:
     ensure_schema()
 
@@ -87,6 +88,7 @@ def create_topic_flashcard(request: TopicFlashcardRequest) -> dict:
         topic=request.topic,
         difficulty=request.difficulty,
         text_type=request.text_type,
+        exclude_source_texts=request.exclude_source_texts,
     )
 
     if existing:
@@ -99,6 +101,7 @@ def create_topic_flashcard(request: TopicFlashcardRequest) -> dict:
         "target_language": request.target_language,
         "num_options": request.num_options,
         "text_type": request.text_type,
+        "exclude_source_texts": request.exclude_source_texts,
     }
 
     prompt = make_topic_flashcard_payload(
@@ -108,11 +111,15 @@ def create_topic_flashcard(request: TopicFlashcardRequest) -> dict:
         target_language=request.target_language,
         num_options=request.num_options,
         text_type=request.text_type,
+        exclude_source_texts=request.exclude_source_texts,
     )
 
     raw_response = call_llm(prompt, "make_flashcard_for_topic.txt")
     sanitized_response = sanitize_llm_json_response(raw_response)
     card_data = json.loads(sanitized_response)
+
+    if card_data.get("source_text") in request.exclude_source_texts:
+        raise ValueError("LLM returned a repeated source_text that was explicitly excluded")
 
     flashcard_id = save_flashcard(
         card_data=card_data,

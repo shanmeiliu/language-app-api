@@ -76,6 +76,7 @@ def make_topic_flashcard_payload(
     target_language: str,
     num_options: int,
     text_type: str | None,
+    exclude_source_texts: list[str] | None = None,
 ) -> str:
     payload = {
         "topic": topic,
@@ -84,5 +85,6 @@ def make_topic_flashcard_payload(
         "target_language": target_language,
         "num_options": num_options,
         "text_type": text_type,
+        "exclude_source_texts": exclude_source_texts or [],
     }
     return json.dumps(payload, ensure_ascii=False)

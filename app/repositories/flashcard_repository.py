@@ -178,29 +178,59 @@ def find_existing_phrase_flashcard(
 
     return get_flashcard_by_id(row[0])
 
+
 def find_existing_topic_flashcard(
     source_lang: str,
     target_lang: str,
     topic: str,
     difficulty: str,
     text_type: str | None,
+    exclude_source_texts: list[str] | None = None,
 ) -> Optional[dict]:
+    exclude_source_texts = exclude_source_texts or []
+
     with get_db_cursor() as cur:
-        cur.execute(
-            """
-            SELECT flashcard_id
-            FROM public.flashcard
-            WHERE source_lang = %s
-              AND target_lang = %s
-              AND prompt_type = 'topic'
-              AND topic = %s
-              AND difficulty = %s
-              AND text_type IS NOT DISTINCT FROM %s
-            ORDER BY created_at DESC
-            LIMIT 1
-            """,
-            (source_lang, target_lang, topic, difficulty, text_type),
-        )
+        if exclude_source_texts:
+            cur.execute(
+                """
+                SELECT flashcard_id
+                FROM public.flashcard
+                WHERE source_lang = %s
+                  AND target_lang = %s
+                  AND prompt_type = 'topic'
+                  AND topic = %s
+                  AND difficulty = %s
+                  AND text_type IS NOT DISTINCT FROM %s
+                  AND NOT (source_text = ANY(%s))
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (
+                    source_lang,
+                    target_lang,
+                    topic,
+                    difficulty,
+                    text_type,
+                    exclude_source_texts,
+                ),
+            )
+        else:
+            cur.execute(
+                """
+                SELECT flashcard_id
+                FROM public.flashcard
+                WHERE source_lang = %s
+                  AND target_lang = %s
+                  AND prompt_type = 'topic'
+                  AND topic = %s
+                  AND difficulty = %s
+                  AND text_type IS NOT DISTINCT FROM %s
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (source_lang, target_lang, topic, difficulty, text_type),
+            )
+
         row = cur.fetchone()
 
     if not row:
