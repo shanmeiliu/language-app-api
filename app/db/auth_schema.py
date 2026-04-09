@@ -38,6 +38,12 @@ def ensure_auth_schema() -> None:
           expires_at TIMESTAMPTZ NOT NULL,
           revoked_at TIMESTAMPTZ
         );
+        CREATE TABLE IF NOT EXISTS public.magic_link (
+        token_hash TEXT PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES public.app_user(user_id) ON DELETE CASCADE,
+        expires_at TIMESTAMPTZ NOT NULL,
+        used_at TIMESTAMPTZ
+        );
 
         CREATE INDEX IF NOT EXISTS idx_user_session_user_id
         ON public.user_session(user_id);

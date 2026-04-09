@@ -15,6 +15,11 @@ from app.services.auth_utils import (
     generate_username,
     hash_session_token,
 )
+from app.services.magic_link_service import (
+    create_anonymous_user,
+    create_magic_link,
+    redeem_magic_link,
+)
 from app.services.google_oauth import oauth
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -95,3 +100,21 @@ def logout(
 def me(current_user=Depends(require_current_user)):
     return current_user
 
+@router.post("/magic-link/start")
+def start_magic_link():
+    user = create_anonymous_user()
+    token = create_magic_link(user["user_id"])
+
+    link = f"{settings.frontend_base_url}/magic-login?token={token}"
+
+    return {
+        "login_link": link,
+        "username": user["username"],
+    }
+
+@router.post("/magic-link/redeem")
+def redeem_magic(token: str, response: Response):
+    user, session_token = redeem_magic_link(token)
+
+    set_session_cookie(response, session_token)
+    return {"ok": True}

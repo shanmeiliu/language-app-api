@@ -5,6 +5,8 @@ from app.api.flashcards import router as flashcards_router
 from app.api.game import router as game_router
 from app.api.auth import router as auth_router
 from app.db.auth_schema import ensure_auth_schema
+from app.middleware.session_middleware import SessionMiddleware
+
 
 app = FastAPI(title=settings.app_name)
 
@@ -15,6 +17,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SessionMiddleware)
 
 @app.on_event("startup")
 def startup():
