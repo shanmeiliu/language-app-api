@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.flashcards import router as flashcards_router
 from app.api.game import router as game_router
+from app.api.auth import router as auth_router
+from app.db.auth_schema import ensure_auth_schema
 
 app = FastAPI(title=settings.app_name)
 
@@ -14,8 +16,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+def startup():
+    ensure_auth_schema()
+
 app.include_router(flashcards_router)
 app.include_router(game_router)
+app.include_router(auth_router)
 
 
 @app.get("/")
