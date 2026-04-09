@@ -53,6 +53,7 @@ def login_password(request: LoginPasswordRequest, response: Response):
 
 @router.get("/google/login")
 async def google_login(request: Request):
+    print("Google login called")
     redirect_uri = settings.google_redirect_uri
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
@@ -63,17 +64,21 @@ async def google_callback(request: Request):
     userinfo = token.get("userinfo")
     if not userinfo:
         userinfo = await oauth.google.userinfo(token=token)
-
+    
     google_sub = userinfo["sub"]
     email = userinfo.get("email")
-    username = f"google_{generate_username('user')}"
+    display_name = userinfo.get("name") or email or "Google User"
+    username = generate_username("google")
 
     user = upsert_google_user(
         google_sub=google_sub,
         email=email,
         username=username,
+        display_name=display_name,
     )
 
+   
+    
     raw_token = generate_session_token()
     create_session(
         user_id=user["user_id"],
@@ -85,6 +90,7 @@ async def google_callback(request: Request):
     response = RedirectResponse(url=settings.frontend_base_url)
     set_session_cookie(response, raw_token)
     return response
+
 
 @router.post("/logout")
 def logout(

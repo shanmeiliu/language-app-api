@@ -5,6 +5,7 @@ from app.api.flashcards import router as flashcards_router
 from app.api.game import router as game_router
 from app.api.auth import router as auth_router
 from app.db.auth_schema import ensure_auth_schema
+from starlette.middleware.sessions import SessionMiddleware as StarletteSessionMiddleware
 from app.middleware.session_middleware import SessionMiddleware
 
 
@@ -12,10 +13,16 @@ app = FastAPI(title=settings.app_name)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+app.add_middleware(
+    StarletteSessionMiddleware,
+    secret_key=settings.starlette_session_secret,
+    same_site="lax",
+    https_only=False,  # set True behind HTTPS
 )
 app.add_middleware(SessionMiddleware)
 

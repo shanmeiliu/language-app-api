@@ -1,20 +1,24 @@
 from typing import Optional
 from app.db.connection import get_db_cursor
-from app.services.auth_utils import utcnow
 
 
-def create_local_user(username: str, password_hash: str, email: Optional[str] = None) -> dict:
+def create_local_user(
+    username: str,
+    password_hash: str,
+    email: Optional[str] = None,
+    display_name: Optional[str] = None,
+) -> dict:
     with get_db_cursor() as cur:
         cur.execute(
             """
             INSERT INTO public.app_user (
-                account_type, email, username, password_hash,
+                account_type, email, username, display_name, password_hash,
                 last_login_at, last_activity_at
             )
-            VALUES ('local', %s, %s, %s, NOW(), NOW())
-            RETURNING user_id, account_type, email, username, is_active
+            VALUES ('local', %s, %s, %s, %s, NOW(), NOW())
+            RETURNING user_id, account_type, email, username, display_name, is_active
             """,
-            (email, username, password_hash),
+            (email, username, display_name, password_hash),
         )
         row = cur.fetchone()
 
@@ -23,7 +27,8 @@ def create_local_user(username: str, password_hash: str, email: Optional[str] = 
         "account_type": row[1],
         "email": row[2],
         "username": row[3],
-        "is_active": row[4],
+        "display_name": row[4],
+        "is_active": row[5],
     }
 
 
@@ -31,7 +36,7 @@ def get_user_by_username(username: str) -> Optional[dict]:
     with get_db_cursor() as cur:
         cur.execute(
             """
-            SELECT user_id, account_type, email, username, password_hash, is_active
+            SELECT user_id, account_type, email, username, display_name, password_hash, is_active
             FROM public.app_user
             WHERE username = %s
             """,
@@ -47,52 +52,35 @@ def get_user_by_username(username: str) -> Optional[dict]:
         "account_type": row[1],
         "email": row[2],
         "username": row[3],
-        "password_hash": row[4],
-        "is_active": row[5],
+        "display_name": row[4],
+        "password_hash": row[5],
+        "is_active": row[6],
     }
 
 
-def get_user_by_google_sub(google_sub: str) -> Optional[dict]:
-    with get_db_cursor() as cur:
-        cur.execute(
-            """
-            SELECT user_id, account_type, email, username, is_active
-            FROM public.app_user
-            WHERE google_sub = %s
-            """,
-            (google_sub,),
-        )
-        row = cur.fetchone()
-
-    if not row:
-        return None
-
-    return {
-        "user_id": str(row[0]),
-        "account_type": row[1],
-        "email": row[2],
-        "username": row[3],
-        "is_active": row[4],
-    }
-
-
-def upsert_google_user(google_sub: str, email: Optional[str], username: str) -> dict:
+def upsert_google_user(
+    google_sub: str,
+    email: Optional[str],
+    username: str,
+    display_name: Optional[str] = None,
+) -> dict:
     with get_db_cursor() as cur:
         cur.execute(
             """
             INSERT INTO public.app_user (
-                account_type, email, google_sub, username,
+                account_type, email, google_sub, username, display_name,
                 last_login_at, last_activity_at, expires_at
             )
-            VALUES ('google', %s, %s, %s, NOW(), NOW(), NOW() + INTERVAL '1 year')
-            ON CONFLICT (google_sub) DO UPDATE
+            VALUES ('google', %s, %s, %s, %s, NOW(), NOW(), NOW() + INTERVAL '1 year')
+            ON CONFLICT (google_sub) WHERE google_sub IS NOT NULL DO UPDATE
             SET email = EXCLUDED.email,
+                display_name = EXCLUDED.display_name,
                 last_login_at = NOW(),
                 last_activity_at = NOW(),
                 expires_at = NOW() + INTERVAL '1 year'
-            RETURNING user_id, account_type, email, username, is_active
+            RETURNING user_id, account_type, email, username, display_name, is_active
             """,
-            (email, google_sub, username),
+            (email, google_sub, username, display_name),
         )
         row = cur.fetchone()
 
@@ -101,7 +89,8 @@ def upsert_google_user(google_sub: str, email: Optional[str], username: str) -> 
         "account_type": row[1],
         "email": row[2],
         "username": row[3],
-        "is_active": row[4],
+        "display_name": row[4],
+        "is_active": row[5],
     }
 
 
@@ -130,6 +119,7 @@ def get_session_with_user(token_hash: str) -> Optional[dict]:
                 u.account_type,
                 u.email,
                 u.username,
+                u.display_name,
                 u.is_active
             FROM public.user_session s
             JOIN public.app_user u ON u.user_id = s.user_id
@@ -150,7 +140,8 @@ def get_session_with_user(token_hash: str) -> Optional[dict]:
         "account_type": row[4],
         "email": row[5],
         "username": row[6],
-        "is_active": row[7],
+        "display_name": row[7],
+        "is_active": row[8],
     }
 
 

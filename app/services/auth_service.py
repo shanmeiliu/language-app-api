@@ -22,7 +22,12 @@ def register_local_user(email: str | None, password: str) -> tuple[dict, str]:
 
     username = generate_username("local")
     hashed = hash_password(password)
-    user = create_local_user(username=username, password_hash=hashed, email=email)
+    user = create_local_user(
+        username=username,
+        password_hash=hashed,
+        email=email,
+        display_name=username,
+    )
 
     raw_token = generate_session_token()
     create_session(
@@ -57,6 +62,7 @@ def login_with_password(username: str, password: str) -> tuple[dict, str]:
         "account_type": user["account_type"],
         "email": user["email"],
         "username": user["username"],
+        "display_name": user["display_name"],
         "is_active": user["is_active"],
     }, raw_token
 
@@ -86,6 +92,7 @@ def get_current_user_from_session(raw_token: str) -> dict:
         "account_type": session["account_type"],
         "email": session["email"],
         "username": session["username"],
+        "display_name": session["display_name"],
         "is_active": session["is_active"],
     }
 

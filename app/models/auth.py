@@ -17,4 +17,5 @@ class UserResponse(BaseModel):
     account_type: str
     email: Optional[str] = None
     username: str
+    display_name: Optional[str] = None
     is_active: bool

@@ -12,6 +12,7 @@ def ensure_auth_schema() -> None:
           email VARCHAR(320),
           google_sub VARCHAR(255),
           username VARCHAR(100) NOT NULL UNIQUE,
+          display_name VARCHAR(255),
           password_hash TEXT,
           is_active BOOLEAN NOT NULL DEFAULT TRUE,
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -38,16 +39,16 @@ def ensure_auth_schema() -> None:
           expires_at TIMESTAMPTZ NOT NULL,
           revoked_at TIMESTAMPTZ
         );
-        CREATE TABLE IF NOT EXISTS public.magic_link (
-        token_hash TEXT PRIMARY KEY,
-        user_id UUID NOT NULL REFERENCES public.app_user(user_id) ON DELETE CASCADE,
-        expires_at TIMESTAMPTZ NOT NULL,
-        used_at TIMESTAMPTZ
-        );
 
         CREATE INDEX IF NOT EXISTS idx_user_session_user_id
         ON public.user_session(user_id);
 
         CREATE INDEX IF NOT EXISTS idx_user_session_token_hash
         ON public.user_session(session_token_hash);
+        """)
+
+        # safe migration for existing table
+        cur.execute("""
+        ALTER TABLE public.app_user
+        ADD COLUMN IF NOT EXISTS display_name VARCHAR(255)
         """)
