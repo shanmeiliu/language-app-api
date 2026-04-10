@@ -14,6 +14,7 @@ from app.services.llm_service import (
     make_topic_flashcard_payload,
     sanitize_llm_json_response,
 )
+from fastapi import HTTPException
 
 def flashcard_record_to_response(record: dict, cache_hit: bool) -> dict:
     return {
@@ -32,6 +33,11 @@ def flashcard_record_to_response(record: dict, cache_hit: bool) -> dict:
 
 def create_phrase_flashcard(request: PhraseFlashcardRequest) -> dict:
     ensure_schema()
+    if request.source_language.strip().lower() == request.target_language.strip().lower():
+        raise HTTPException(
+            status_code=400,
+            detail="Source and target language cannot be the same"
+        )
 
     existing = find_existing_phrase_flashcard(
         source_lang=request.source_language,
@@ -85,6 +91,11 @@ def create_phrase_flashcard(request: PhraseFlashcardRequest) -> dict:
 
 def create_topic_flashcard(request: TopicFlashcardRequest) -> dict:
     ensure_schema()
+    if request.source_language.strip().lower() == request.target_language.strip().lower():
+        raise HTTPException(
+            status_code=400,
+            detail="Source and target language cannot be the same"
+        )
 
     existing = find_existing_topic_flashcard(
         source_lang=request.source_language,

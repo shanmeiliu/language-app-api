@@ -75,6 +75,12 @@ def _generate_and_save_batch(request: GameNextQuestionRequest) -> None:
 
 def get_next_game_question(request: GameNextQuestionRequest) -> dict:
     ensure_schema()
+    from fastapi import HTTPException
+    if request.source_language.strip().lower() == request.target_language.strip().lower():
+        raise HTTPException(
+            status_code=400,
+            detail="Source and target language cannot be the same"
+        )
 
     cached_cards = find_available_topic_flashcards(
         source_lang=request.source_language,
