@@ -6,10 +6,10 @@ from app.services.auth_utils import (
     generate_username,
     default_session_expiry,
     generate_session_token,
+    utcnow,
 )
 from app.repositories.auth_repository import create_session
 from app.core.config import settings
-
 
 def create_anonymous_user() -> dict:
     username = generate_username("anon")
@@ -75,7 +75,7 @@ def redeem_magic_link(raw_token: str) -> tuple[dict, str]:
         if used_at:
             raise ValueError("Link already used")
 
-        if expires_at < default_session_expiry():
+        if expires_at < utcnow():
             raise ValueError("Link expired")
 
         # mark used
