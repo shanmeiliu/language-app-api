@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: language-app-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: language_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mypw
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./language-app-backend
+      dockerfile: Dockerfile
+    container_name: language-app-backend
+    restart: unless-stopped
+    env_file:
+      - ./language-app-backend/.env
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./language-app-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8000
+    container_name: language-app-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:
