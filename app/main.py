@@ -13,17 +13,19 @@ app = FastAPI(title=settings.app_name)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
+    allow_origins=settings.cors_allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 app.add_middleware(
     StarletteSessionMiddleware,
     secret_key=settings.starlette_session_secret,
-    same_site="lax",
-    https_only=False,  # set True behind HTTPS
+    same_site=settings.session_same_site,
+    https_only=settings.session_https_only,
 )
+
 app.add_middleware(SessionMiddleware)
 
 @app.on_event("startup")
@@ -43,3 +45,17 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+import os
+
+if __name__ == "__main__":
+    import uvicorn
+
+    port = int(os.getenv("PORT", "8000"))
+
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=port,
+        reload=True,
+    )

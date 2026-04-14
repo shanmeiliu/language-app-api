@@ -30,8 +30,8 @@ def set_session_cookie(response: Response, token: str) -> None:
         key=settings.session_cookie_name,
         value=token,
         httponly=True,
-        samesite="lax",
-        secure=False,  # set True behind HTTPS
+        samesite=settings.session_same_site,
+        secure=settings.session_https_only,
         max_age=settings.session_ttl_days * 24 * 60 * 60,
         path="/",
     )
