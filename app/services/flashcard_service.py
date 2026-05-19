@@ -26,6 +26,7 @@ def flashcard_record_to_response(record: dict, cache_hit: bool) -> dict:
         "topic": record["topic"],
         "source_text": record["source_text"],
         "target_text": record["target_text"],
+        "flashcard_id": str(record["flashcard_id"]),
         "explanation": record["explanation"],
         "options": [opt["text"] for opt in record["options"]],
         "cache_hit": cache_hit,

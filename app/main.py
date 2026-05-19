@@ -7,7 +7,7 @@ from app.api.auth import router as auth_router
 from app.db.auth_schema import ensure_auth_schema
 from starlette.middleware.sessions import SessionMiddleware as StarletteSessionMiddleware
 from app.middleware.session_middleware import SessionMiddleware
-
+from app.db.progress_schema import ensure_progress_schema
 
 app = FastAPI(title=settings.app_name)
 
@@ -31,10 +31,12 @@ app.add_middleware(SessionMiddleware)
 @app.on_event("startup")
 def startup():
     ensure_auth_schema()
+    ensure_progress_schema()
 
 app.include_router(flashcards_router)
 app.include_router(game_router)
 app.include_router(auth_router)
+app.include_router(progress_router)
 
 
 @app.get("/")

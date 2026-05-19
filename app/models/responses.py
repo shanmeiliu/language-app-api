@@ -11,6 +11,7 @@ class FlashcardResponse(BaseModel):
     topic: Optional[str] = None
     source_text: str
     target_text: str
+    flashcard_id: str
     explanation: Optional[str] = None
     options: List[str]
     cache_hit: bool
