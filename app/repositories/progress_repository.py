@@ -1,42 +1,44 @@
 from app.db.connection import get_db_cursor
 
 
-def record_flashcard_shown(user_id: str, flashcard_id: str, mode: str | None) -> str:
+
+
+def record_flashcard_answer(
+    user_id: str,
+    flashcard_id: str,
+    selected_option: str,
+    correct_answer: str,
+    is_correct: bool,
+    mode: str | None,
+) -> str:
     with get_db_cursor() as cur:
         cur.execute(
             """
             INSERT INTO public.user_flashcard_attempt (
                 user_id,
                 flashcard_id,
-                mode
+                selected_option,
+                correct_answer,
+                is_correct,
+                mode,
+                answered_at
             )
-            VALUES (%s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, NOW())
             RETURNING attempt_id
             """,
-            (user_id, flashcard_id, mode),
+            (
+                user_id,
+                flashcard_id,
+                selected_option,
+                correct_answer,
+                is_correct,
+                mode,
+            ),
         )
+
         row = cur.fetchone()
 
     return str(row[0])
-
-
-def record_flashcard_answer(
-    attempt_id: str,
-    selected_option: str,
-    correct_answer: str,
-    is_correct: bool,
-) -> None:
-    with get_db_cursor() as cur:
-        cur.execute(
-            """
-            UPDATE public.user_flashcard_attempt
-            SET answered_at = NOW(),
-                selected_option = %s,
-                correct_answer = %s,
-                is_correct = %s
-            WHERE attempt_id = %s
-            """,
-            (selected_option, correct_answer, is_correct, attempt_id),
         )
 
 

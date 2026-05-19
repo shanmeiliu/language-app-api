@@ -18,7 +18,10 @@ def ensure_progress_schema() -> None:
           mode VARCHAR(30),
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
-
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_pending_user_flashcard_attempt
+        ON public.user_flashcard_attempt(user_id, flashcard_id, COALESCE(mode, ''))
+        WHERE answered_at IS NULL;
+        
         CREATE INDEX IF NOT EXISTS idx_user_flashcard_attempt_user_id
         ON public.user_flashcard_attempt(user_id);
 

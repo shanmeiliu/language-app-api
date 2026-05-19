@@ -9,13 +9,14 @@ class RecordShownRequest(BaseModel):
 
 class RecordShownResponse(BaseModel):
     attempt_id: str
-
+ 
 
 class RecordAnswerRequest(BaseModel):
-    attempt_id: str
+    flashcard_id: str
     selected_option: str
     correct_answer: str
     is_correct: bool
+    mode: str | None = None
 
 
 class DashboardAttemptResponse(BaseModel):

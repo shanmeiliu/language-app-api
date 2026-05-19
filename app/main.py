@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.flashcards import router as flashcards_router
 from app.api.game import router as game_router
+from app.api.progress import router as progress_router
 from app.api.auth import router as auth_router
 from app.db.auth_schema import ensure_auth_schema
 from starlette.middleware.sessions import SessionMiddleware as StarletteSessionMiddleware
@@ -30,8 +31,13 @@ app.add_middleware(SessionMiddleware)
 
 @app.on_event("startup")
 def startup():
+    print("Starting auth schema...")
     ensure_auth_schema()
+    print("Finished auth schema.")
+
+    print("Starting progress schema...")
     ensure_progress_schema()
+    print("Finished progress schema.")
 
 app.include_router(flashcards_router)
 app.include_router(game_router)

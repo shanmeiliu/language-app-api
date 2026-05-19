@@ -35,10 +35,12 @@ def record_answer(
     current_user=Depends(require_current_user),
 ):
     record_flashcard_answer(
-        attempt_id=request.attempt_id,
+        user_id=current_user["user_id"],
+        flashcard_id=request.flashcard_id,
         selected_option=request.selected_option,
         correct_answer=request.correct_answer,
         is_correct=request.is_correct,
+        mode=request.mode,
     )
 
     return {"ok": True}
