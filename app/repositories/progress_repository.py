@@ -1,8 +1,6 @@
 from app.db.connection import get_db_cursor
 
 
-
-
 def record_flashcard_answer(
     user_id: str,
     flashcard_id: str,
@@ -39,7 +37,7 @@ def record_flashcard_answer(
         row = cur.fetchone()
 
     return str(row[0])
-        )
+
 
 
 def get_user_dashboard_attempts(user_id: str, limit: int = 100) -> list[dict]:

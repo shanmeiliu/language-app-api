@@ -19,6 +19,7 @@ def parse_csv(value: str | None) -> list[str]:
 
 class Settings:
     app_name: str = "Language App API"
+    api_root_path: str = os.getenv("API_ROOT_PATH", "").rstrip("/")
 
     openai_api_key: Optional[str] = os.getenv("OPENAI_API_KEY")
     openai_base_url: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")

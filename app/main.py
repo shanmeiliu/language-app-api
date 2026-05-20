@@ -10,7 +10,10 @@ from starlette.middleware.sessions import SessionMiddleware as StarletteSessionM
 from app.middleware.session_middleware import SessionMiddleware
 from app.db.progress_schema import ensure_progress_schema
 
-app = FastAPI(title=settings.app_name)
+app = FastAPI(
+    title=settings.app_name,
+    root_path=settings.api_root_path if settings.api_root_path != "/" else "",
+)
 
 app.add_middleware(
     CORSMiddleware,

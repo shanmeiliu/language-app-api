@@ -8,8 +8,7 @@ from app.models.progress import (
 )
 from app.repositories.progress_repository import (
     get_user_dashboard_attempts,
-    record_flashcard_answer,
-    record_flashcard_shown,
+    record_flashcard_answer
 )
 
 router = APIRouter(prefix="/api/progress", tags=["progress"])
