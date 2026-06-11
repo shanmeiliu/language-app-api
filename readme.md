@@ -239,5 +239,133 @@ Return result
 
 
 
+# Docker setup
+
+
+Below is a copy-ready Docker setup.
+
+## Project root structure
+
+```text
+project-root/
+  .env
+  docker-compose.yml
+  reverse-proxy/
+    nginx.conf
+  language-app-backend/
+    Dockerfile
+    .dockerignore
+    .env
+    requirements.txt
+  language-app-frontend/
+    Dockerfile
+    .dockerignore
+    nginx.conf.template
+    .env
+```
+
+## Root `.env`
+
+```env
+BACKEND_PORT=8000
+FRONTEND_PORT=5173
+
+DB_NAME=language_db
+DB_USER=postgres
+DB_PASSWORD=mypw
+
+API_ROOT_PATH=/language-app-api
+FRONTEND_BASE_PATH=/language-app-web/
+```
+
+
+## `language-app-backend/.env`
+
+```env
+PORT=8000
+
+DATABASE_URL=postgresql://postgres:mypw@db:5432/language_db
+
+API_ROOT_PATH=/language-app-api
+APP_BASE_URL=http://localhost:8000/language-app-api
+FRONTEND_BASE_URL=http://localhost:8000/language-app-web/
+GOOGLE_REDIRECT_URI=http://localhost:8000/language-app-api/auth/google/callback
+
+SESSION_COOKIE_NAME=language_app_session
+SESSION_TTL_DAYS=30
+STARLETTE_SESSION_SECRET=change_this_to_a_long_random_secret
+SESSION_SAME_SITE=lax
+SESSION_HTTPS_ONLY=false
+
+CORS_ALLOW_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
+
+OPENAI_API_KEY=your_api_key
+OPENAI_BASE_URL=https://api.openai.com/v1
+MODEL_NAME=gpt-4o-mini
+
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+```
+
+## `language-app-frontend/.env`
+
+```env
+PORT=5173
+VITE_APP_BASE_PATH=/language-app-web/
+VITE_API_BASE_URL=http://localhost:8000/language-app-api
+```
+
+## Required code settings
+
+Backend `app/main.py` should use:
+
+```python
+app = FastAPI(
+    title=settings.app_name,
+    root_path=settings.api_root_path if settings.api_root_path != "/" else "",
+)
+```
+
+Frontend `vite.config.ts` should use:
+
+```ts
+base: env.VITE_APP_BASE_PATH || "/",
+```
+
+Frontend `App.tsx` should use:
+
+```tsx
+const basePath = (import.meta.env.VITE_APP_BASE_PATH || "/").replace(/\/+$/, "");
+
+<BrowserRouter basename={basePath}>
+```
+
+## Run
+
+From `project-root`:
+
+```bash
+docker compose up --build
+```
+
+Open:
+
+```text
+http://localhost:8000/language-app-web/
+```
+
+Backend Swagger:
+
+```text
+http://localhost:8000/language-app-api/docs
+```
+
+## Google OAuth redirect URI
+
+Add this in Google Cloud Console:
+
+```text
+http://localhost:8000/language-app-api/auth/google/callback
+```
 
 
